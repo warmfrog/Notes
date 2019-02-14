@@ -6,7 +6,7 @@ do
     len=`expr ${#article} - 3`
     filename=${article:0:${len}}
     spath="/articles/${article}"
-    record="[${filename}](${spath})"
+    record="[${filename}](${spath})\n"
     echo $record
-    echo $record >> ../readme.md
+    echo -e $record >> ../readme.md
 done

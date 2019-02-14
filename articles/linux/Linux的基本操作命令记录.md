@@ -1,6 +1,3 @@
-
-
-
 * 打包文件
 
     tar -cf archiver.tar foo bar

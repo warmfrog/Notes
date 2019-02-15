@@ -131,3 +131,47 @@ To see more detail about a task, run gradlew help --task <task>
 BUILD SUCCESSFUL in 0s
 1 actionable task: 1 executed
 ```
+
+### 构建java web 应用
+
+Gradle包含一个war包来构建java web应用。社区提供了一个优秀的包gretty来测试和部署web应用在Jetty或者Tomcat上。
+
+#### 创建web应用结构
+
+```text
+webdemo/
+    src/
+        main/
+            java/
+            webapp/
+        test
+            java/
+```
+
+#### 添加一个Gradle构建文件 build.gradle
+
+```groovy
+plugins{
+    id 'war'
+}
+respositories{
+    jcenter()
+}
+dpendencies{
+    provideCompile 'javax.servlet:javax.servlet-api-3.1.0'
+    testCompile 'junit:junit:4.12'
+}
+```
+
+war包添加了配置 providedCompile 和 providedRuntime, 类似与 java 应用中的 编译 和 运行， 用来在本地显示需要的依赖但是不应添加到生成的 webdemo.war 文件。
+
+plugins 语法用来应用 java 和 war 包。不需要指定版本，因为他们包含在 Gradle 构建版本中。
+
+通过执行 `wrapper` 任务来生成一个Gradle wrapper是一个很好的联系。
+
+```bash
+gradle wrapper --gradle-version=4.10-rc-2
+:wrapper
+```
+
+这会生成 `gradle` 和 `gradlew.bat` 脚本和 *gradle* 文件夹下的wrapper jar。

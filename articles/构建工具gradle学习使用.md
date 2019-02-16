@@ -1,5 +1,7 @@
 # 构建工具gradle学习使用
 
+[User Guide](https://docs.gradle.org/current/userguide/userguide.html)
+
 ### [Getting Started](https://gradle.org/guides/#getting-started)
 
 ### 简介
@@ -174,7 +176,7 @@ copy- 复制
 
 Gradle 同样提供一个丰富的基于web的试图被称作 build scan
 
-![build scan.png](/img/build_scan.png)
+![build scan.png](/img/build-scan.png)
 
 通过使用 --scan 选项，可以免费发表构建。 发表构建通过传输这个数据到 Gradle 服务器 <https://scans.gradel.com>. Gradle企业版支持保存数据。
 

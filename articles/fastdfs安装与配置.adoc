@@ -1,0 +1,127 @@
+
+====== Day 5. 商品管理-3 ======
+===== 技术讲解 =====
+==== FastDFS原理 ====
+{{:ecommerce:00_timeline:20160724002540460.png?400|}}
+=== 上传 ===
+{{:ecommerce:00_timeline:20160724003110772.png?400|}}
+=== 下载 ===
+{{:ecommerce:00_timeline:20160724004505121.png?400|}}
+==== FastDFS 安装 ====
+
+==== 安装libfastcommon ====
+安装步骤
+<Code>
+# 确保GCC已安装
+gcc --version
+# 如果没有，安装GCC
+sudo apt install gcc
+sudo apt-get install make
+# 下载
+wget https://github.com/happyfish100/libfastcommon/archive/V1.0.39.tar.gz
+# 解压
+tar -zxvf V1.0.39.tar.gz
+# 进入目录
+cd libfastcommon-1.0.39/
+# make
+sudo ./make.sh
+sudo ./make.sh install
+# 建立软链接
+sudo ln -s /usr/lib64/libfastcommon.so /usr/local/lib/libfastcommon.so
+sudo ln -s /usr/lib64/libfastcommon.so /usr/lib/libfastcommon.so
+sudo ln -s /usr/lib64/libfdfsclient.so /usr/local/lib/libfdfsclient.so
+sudo ln -s /usr/lib64/libfdfsclient.so /usr/lib/libfdfsclient.so
+</Code>
+==== 安装FastDFS ====
+<Code>
+# 下载
+wget https://github.com/happyfish100/fastdfs/archive/V5.11.tar.gz
+# 解压缩
+tar -zxvf V5.11.tar.gz
+# 进入目录
+cd fastdfs-5.11/
+# make
+sudo ./make.sh
+sudo ./make.sh install
+# 
+</Code>
+==== 配置Tracker ====
+<Code>
+cd /etc/fdfs/
+sudo cp tracker.conf.sample tracker.conf
+sudo vi tracker.conf
+# 修改这一行
+base_path=/home/iyu/fastdfs
+# 然后建立相应的目录
+mkdir /home/iyu/fastdfs
+# 启动
+fdfs_trackerd /etc/fdfs/tracker.conf start
+# 查看listen端口，默认22122
+netstat -unltp|grep fdfs
+</Code>
+==== 配置Storage ====
+<Code>
+sudo cp storage.conf.sample storage.conf
+sudo vi storage.conf
+# 修改如下处(tracker_server不能为127.0.0.1或者localhost)
+base_path=/home/iyu/fastdfs/storage
+store_path0=/home/iyu/fastdfs/storage
+tracker_server=192.168.99.167:22122
+# 确保Storage目录存在
+mkdir /home/iyu/fastdfs/storage
+# 启动
+fdfs_storaged /etc/fdfs/storage.conf start
+</Code>
+==== 测试图片上传 ====
+<Code>
+sudo cp client.conf.sample client.conf
+vi client.conf
+# 修改这两行
+base_path=/home/iyu/fastdfs
+tracker_server=192.168.99.167:22122
+
+fdfs_upload_file /etc/fdfs/client.conf th.jpeg
+</Code>
+==== Nginx 安装 ====
+<Code>
+wget http://nginx.org/download/nginx-1.14.2.tar.gz
+tar -zxvf nginx-1.14.2.tar.gz
+wget https://github.com/happyfish100/fastdfs-nginx-module/archive/master.zip
+unzip master.zip
+修改fastdfs-nginx-module-1.20/src/config文件，修改如下：
+ngx_module_incs="/usr/include/fastdfs /usr/include/fastcommon/"
+CORE_INCS="$CORE_INCS /usr/include/fastdfs /usr/include/fastcommon/"
+# 安装必须的包
+sudo apt-get install libpcre3-dev
+sudo apt-get install zlib1g-dev
+./configure --add-module=/home/iyu/Downloads/fastdfs-nginx-module-master/src
+sudo make
+sudo make install
+sudo cp /home/iyu/Downloads/fastdfs-nginx-module-master/src/mod_fastdfs.conf /etc/fdfs/
+sudo vi /etc/fdfs/mod_fastdfs.conf 
+# 修改下面几行
+connect_timeout=10
+url_have_group_name = true
+store_path0=/home/iyu/fastdfs/storage
+# 打开fastdfs安装目录
+sudo cp http.conf mime.types /etc/fdfs/
+ln -s /home/iyu/fastdfs/storage/data/ /home/iyu/fastdfs/storage/data/M00
+sudo vi /usr/local/nginx/conf/nginx.conf
+#添加
+location ~/group([0-9])/M00 {
+           ngx_fastdfs_module;
+        }
+</Code>
+
+==== 安装错误收集 ====
+1. perl: warning: Setting locale failed.\\
+<Code>
+export LC_CTYPE=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+</Code>
+2. the HTTP rewrite module requires the PCRE library.\\
+ sudo apt-get install libpcre3-dev \\
+3. checking for zlib library ... not found\\
+ apt-get install zlib1g-dev
+
+

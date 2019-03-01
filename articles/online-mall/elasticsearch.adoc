@@ -1,0 +1,272 @@
+====== Day 6. 商品搜索（Elasticsearch)-1 ======
+===== 目标 =====
+上午
+  * 完成ES和Kibana在虚拟机中的安装
+  * 了解ES的基本概念
+  * 熟悉ES Rest API的基本使用
+下午
+  * ES的高级用法
+  * 熟悉ES Java编程
+  * 了解ES Spring Data的使用
+====== 技术讲解 ======
+===== Elasticsearch =====
+===== 概述 =====
+Elasticsearch is a **distributed**, **RESTful** search and **analytics** engine capable of solving a **growing number** of use cases. As the heart of the Elastic Stack, it centrally stores your data so you can discover the expected and uncover the unexpected.
+  * distributed - 分布式
+  * RESTful - Restful风格的搜索
+  * analytics - 分析工具
+  * growing number - 增量、海量数据分析（大数据量实时写入和快速聚合分析）
+===== 同类产品比较 =====
+Lucene/Solr/Elasticsearch\\
+{{:ecommerce:00_timeline:solr-vs-elasticsearch.png?400|}}
+\\
+Sor vs Elasticsearch
+  * 同是商业化的解决方案
+  * ES后来者，更好的分布式架构易扩展
+  * ES的优势在于实时搜索
+
+==== 常见应用场景 ====
+  * 电商产品搜索
+  * 日志聚合分析
+==== 常见概念 ====
+  * Near Realtime (NRT) - 实时搜索
+  * Node - 节点 （数据存储/索引/搜索）
+  * Cluster (集群) - 由节点组成集群，每个节点需要有不同的名字
+  * Document (文档) - 顾客、产品
+  * Index （索引）- 相关的文档的集合
+  * Shards / Replicas （分片 / 冗余）- 一个index在创建的时候指定 shards的数量，每个shards有几个冗余备份。一个index默认5个shards，1个Replicas。
+==== 安装 ====
+=== 安装要求 ===
+== Java==
+要求Java 1.8+
+<Code>
+java -version
+echo $JAVA_HOME
+</Code>
+== 安装包下载 ==
+通过网络下载或者{{ :ecommerce:00_timeline:elasticsearch-6.6.0.tar.gz |}}
+<Code>
+wget 'https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.6.0.tar.gz'
+</Code>
+==解压 ==
+<Code>
+tar -xvf elasticsearch-6.6.0.tar.gz
+</Code>
+== 修改配置 ==
+<Code>
+cd elasticsearch-6.6.0/conf
+vi elasticsearch.yml
+# 修改这一行
+network.host: 0.0.0.0
+# 提高一个进程最大的内存区域 max_map_count
+sudo sysctl -w vm.max_map_count=262144
+</Code>
+== 运行 ==
+cd elasticsearch-6.6.0/bin
+== Kibana安装 ==
+下载或者{{ :ecommerce:00_timeline:kibana-6.6.0-linux-x86_64.tar.gz |}}
+<Code>
+wget https://artifacts.elastic.co/downloads/kibana/kibana-6.6.0-linux-x86_64.tar.gz
+tar -zxvf kibana-6.6.0-linux-x86_64.tar.gz
+cd kibana-6.6.0-linux-x86_64/config
+vi kibana.yml
+# 修改这2行
+server.host: "0.0.0.0"
+elasticsearch.hosts: ["http://localhost:9200"]
+./bin/kibana
+</Code>
+
+==== 几个监控接口 ====
+1. 健康接口：http://192.168.101.67:9200/_cat/health?v\\
+  * 状态：绿色。一切良好
+  * 状态：黄色。数据都存在，但是某些Replicas不存在
+  * 装填：红色。部分数据暂时丢失。
+2. Node接口：http://192.168.101.67:9200/_cat/nodes?v \\
+3. Index接口：http://192.168.101.67:9200/_cat/indices?v
+=== 简单例子 ===
+== 创建索引 ==
+<Code>
+PUT /customer?pretty
+GET /_cat/indices?v
+</Code>
+== 新增数据 ==
+<Code>
+PUT /customer/_doc/1?pretty
+{
+  "name": "John Doe"
+}
+</Code>
+== 用ID查询数据 ==
+<Code>
+GET /customer/_doc/1?pretty
+</Code>
+== 删除Index ==
+<Code>
+DELETE /customer?pretty
+GET /_cat/indices?v
+</Code>
+== 更新Document ==
+<Code>
+POST /customer/_doc/1/_update?pretty
+{
+  "doc": { "name": "Jane Doe" }
+}
+</Code>
+== 删除 Document ==
+<Code>
+DELETE /customer/_doc/2?pretty
+</Code>
+== 批量 Document ==
+<Code>
+POST /customer/_doc/_bulk?pretty
+{"index":{"_id":"1"}}
+{"name": "John Doe" }
+{"index":{"_id":"2"}}
+{"name": "Jane Doe" }
+</Code>
+==== 练习 ====
+=== 准备数据 ===
+<Code>
+# 准备例子，使用batch导入
+https://raw.githubusercontent.com/elastic/elasticsearch/master/docs/src/test/resources/accounts.json
+</Code>
+== _search ==
+两种搜索风格
+  * http://192.168.101.67:9200/customer/_search?q=*&sort=account_number:asc&pretty
+  * http://192.168.101.67:9200/customer/_search 通过POST body传值
+<Code>
+// Body 传值的方式，返回同样的结果
+GET /bank/_search
+{
+  "query": { "match_all": {} },
+  "sort": [
+    { "account_number": "asc" }
+  ]
+}
+</Code>
+= 返回解读 =
+  * took: 耗时x ms.
+  * timed_out: 是否超时
+  * _shards: 总共搜索了多少_shards, 包括成功和失败的
+  * hits: 搜索的结果
+  * hits.total: 总共有多少条结果
+  * hits.hits: 结果数组
+== 查询语言 ==
+<Code>
+GET /customer/_search
+{
+  "query": { "match_all": {} },
+  "size": 1
+}
+</Code>
+  * query: 查询的条件
+  * match_all: 查询全部
+  * size: 返回条数
+分页查询
+<Code>
+GET /bank/_search
+{
+  "query": { "match_all": {} },
+  "from": 10,
+  "size": 10
+}
+</Code>
+  * from: 从多少条
+  * size: 每页显示多少条
+排序
+<Code>
+GET /customer/_search
+{
+  "query": { "match_all": {} },
+  "sort": { "balance": { "order": "desc" } }
+}
+</Code>
+指定返回参数
+<Code>
+GET /customer/_search
+{
+  "query": { "match_all": {} },
+  "_source": ["account_number", "balance"]
+}
+</Code>
+全文搜索
+<Code>
+// account_number = 20
+GET /customer/_search
+{
+  "query": { "match": { "account_number": 20 } }
+}
+// address 包含 mil的
+GET /customer/_search
+{
+  "query": { "match": { "address": "mill" } }
+}
+// address 包含 mil 或者 lane的
+GET /customer/_search
+{
+  "query": { "match": { "address": "mill lane" } }
+}
+</Code>
+bool 查询
+<Code>
+//返回即包括“mil”又包含“lane”的
+GET /customer/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "match": { "address": "mill" } },
+        { "match": { "address": "lane" } }
+      ]
+    }
+  }
+}
+// 返回年龄40，但是state不是AK的
+GET /customer/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "match": { "age": "40" } }
+      ],
+      "must_not": [
+        { "match": { "state": "AK" } }
+      ]
+    }
+  }
+}
+</Code>
+过滤
+<Code>
+//返回balance大于20000，小于30000的用户
+GET /customer/_search
+{
+  "query": {
+    "bool": {
+      "must": { "match_all": {} },
+      "filter": {
+        "range": {
+          "balance": {
+            "gte": 20000,
+            "lte": 30000
+          }
+        }
+      }
+    }
+  }
+}
+</Code>
+聚合
+<Code>
+GET /customer/_search
+{
+  "size": 0,
+  "aggs": {
+    "group_by_state": {
+      "terms": {
+        "field": "state.keyword"
+      }
+    }
+  }
+}
+</Code>

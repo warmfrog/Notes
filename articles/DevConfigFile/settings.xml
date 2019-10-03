@@ -1,0 +1,97 @@
+	<settings xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                               http://maven.apache.org/xsd/settings-1.0.0.xsd">
+	<localRepository>/Users/liyue/software/apache-maven-3.5.4/repository</localRepository>
+ 
+	<pluginGroups>
+		<pluginGroup>org.mortbay.jetty</pluginGroup>
+	</pluginGroups>
+
+	<servers>
+		<!-- 增加一个测试服务器 -->
+		<server>
+			<id>nexus-releases</id>
+			<username>admin</username>
+			<password>admin123</password>
+		</server>
+		<server>
+			<id>nexus-snapshots</id>
+			<username>admin</username>
+			<password>admin123</password>
+		</server>
+	</servers>
+	
+	 <mirrors> 
+
+
+
+
+    <mirror>   
+      <id>nexus-releases</id>   
+      <mirrorOf>*</mirrorOf>   
+      <url>http://10.101.70.237:8081/nexus/content/groups/public</url>
+    </mirror>	
+    <mirror>   
+      <id>nexus-snapshots</id>   
+      <mirrorOf>*</mirrorOf>   
+      <url>http://10.101.70.237:8081/nexus/content/repositories/snapshots</url>   
+    </mirror> 
+    <mirror>   
+      <id>test-nexus-releases</id>
+      <mirrorOf>*</mirrorOf>   
+      <url>http://10.101.70.189:8081/nexus/content/repositories/releases</url> 	  
+    </mirror> 	
+  </mirrors>   
+	
+	
+	<!-- 设定除中央仓库(repo1.maven.org/maven2/)外的其他仓库,按设定顺序进行查找. -->
+	<profiles>
+		<profile>  
+			<id>jdk-1.8</id>  
+			<activation>  
+				<activeByDefault>true</activeByDefault>  
+				<jdk>1.8</jdk>  
+			</activation>  
+		<properties>  
+			<maven.compiler.source>1.8</maven.compiler.source>  
+			<maven.compiler.target>1.8</maven.compiler.target>  
+			<maven.compiler.compilerVersion>1.8</maven.compiler.compilerVersion>  
+		</properties>  
+		</profile>
+		<profile>
+			<!-- 如有Nexus私服, 取消注释并指向正确的服务器地址.-->
+			<id>Rep</id>
+			<repositories>
+				<repository>
+					<id>snapshots</id>
+					<name>Snapshots</name>
+					<url>http://10.101.70.237:8081/nexus/content/repositories/snapshots/</url>
+					<releases>
+						<enabled>true</enabled>
+					</releases>
+					<snapshots>
+						<enabled>true</enabled>
+						<updatePolicy>always</updatePolicy>
+					</snapshots>
+				</repository>
+			</repositories>
+			<pluginRepositories>
+				<pluginRepository>
+					<id>releases</id>
+					<name>Releases</name>
+					<url>http://10.101.70.237:8081/nexus/content/repositories/releases/</url>
+					<releases><enabled>true</enabled></releases>
+					<snapshots>
+						<enabled>true</enabled>
+						<updatePolicy>always</updatePolicy>
+					  </snapshots>
+				</pluginRepository>			
+			</pluginRepositories>
+		</profile>
+	</profiles>
+	
+	<activeProfiles>     
+		<activeProfile>Rep</activeProfile>     
+	</activeProfiles>  
+	
+</settings>
